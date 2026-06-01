@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: canoptek-calculator
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: sqlite:////app/data/canoptek.sqlite3
+      FIXTURES_DIR: /app/fixtures/wahapedia/wh40k10ed
+    volumes:
+      - ./data:/app/data
+      - ./fixtures:/app/fixtures

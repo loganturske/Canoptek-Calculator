@@ -1,0 +1,128 @@
+{
+  "source": "wahapedia",
+  "game_system": "wh40k10ed",
+  "spec_url": "https://www.wahapedia.ru/wh40k10ed/Export%20Data%20Specs.xlsx",
+  "downloaded_at": "2026-06-01T21:27:10.280444Z",
+  "files": [
+    {
+      "name": "Abilities.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Abilities.csv",
+      "sha256": "d66a20c18373c5bd426747bd26e48e2febc587905d39025cc795463a6323ab6e",
+      "bytes": 199490
+    },
+    {
+      "name": "Datasheets.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets.csv",
+      "sha256": "04ff4099138ecf3323b7a075d14a5d12c3691a82093377e1d50ac3ccee2645c9",
+      "bytes": 896425
+    },
+    {
+      "name": "Datasheets_abilities.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets_abilities.csv",
+      "sha256": "e8fa5a1704e067f27a8fc9fe29bf79f950536f98dc528c5f8951eacd3f757943",
+      "bytes": 1006135
+    },
+    {
+      "name": "Datasheets_detachment_abilities.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets_detachment_abilities.csv",
+      "sha256": "25dd3082bebd92fa8df5688dc18dc633a546107aa3905f3cf202685e0dddd4bd",
+      "bytes": 363282
+    },
+    {
+      "name": "Datasheets_enhancements.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets_enhancements.csv",
+      "sha256": "f93e6297402dbf65bf420f475671fa8fab5471ae1f002ba59db863805fcb6717",
+      "bytes": 289608
+    },
+    {
+      "name": "Datasheets_keywords.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets_keywords.csv",
+      "sha256": "62cf33e9fe21c5fe4faacfeb71463a36415ed78ac97c91c840806f7b63f936d5",
+      "bytes": 469468
+    },
+    {
+      "name": "Datasheets_leader.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets_leader.csv",
+      "sha256": "dd0402011cc1506ecbefdac431f8116687afb718e4d5dad309f7337e51c59aab",
+      "bytes": 42223
+    },
+    {
+      "name": "Datasheets_models.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets_models.csv",
+      "sha256": "775283cd9ee1111fb9685b1e48cc3dfc424ce3d2e344b4f811d35dc976ae3d27",
+      "bytes": 110519
+    },
+    {
+      "name": "Datasheets_models_cost.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets_models_cost.csv",
+      "sha256": "250d9a52d294de2c00ce242d465a4c8b4723ba50cbc50d73d811fdda5b6254c1",
+      "bytes": 57382
+    },
+    {
+      "name": "Datasheets_options.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets_options.csv",
+      "sha256": "6d27568a023cc0d9210cc3b0f946bbb93e48061119db84bb4cfbfedb3e48464d",
+      "bytes": 384501
+    },
+    {
+      "name": "Datasheets_stratagems.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets_stratagems.csv",
+      "sha256": "27a6f9b5d1a70949247077dd74288c2c34d27868cd6f301d24fda81880e2f469",
+      "bytes": 2277256
+    },
+    {
+      "name": "Datasheets_unit_composition.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets_unit_composition.csv",
+      "sha256": "9e655597dbe5424ab18f6fa58c6e16932b092096e4c1db2ca53ac9a3a5387e2f",
+      "bytes": 88287
+    },
+    {
+      "name": "Datasheets_wargear.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Datasheets_wargear.csv",
+      "sha256": "069d80b4d87e715b1b72d3fc9b22337c9fdeb965dcbebc1f1a8d4aa6bcaab57d",
+      "bytes": 654148
+    },
+    {
+      "name": "Detachment_abilities.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Detachment_abilities.csv",
+      "sha256": "ab2f69cd5b8e445286fdd8a95f6144c6dbaafaeb15c0c2f58502a71577821b6d",
+      "bytes": 299211
+    },
+    {
+      "name": "Detachments.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Detachments.csv",
+      "sha256": "2920d57d4a80c66b74098ca66eee276c628e32c93c641690753923f047c8e8ea",
+      "bytes": 143719
+    },
+    {
+      "name": "Enhancements.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Enhancements.csv",
+      "sha256": "b08fafdbd11bff3a37762f1a0938b670de3c60b3698a7ac1cc600940f9c2efe5",
+      "bytes": 437366
+    },
+    {
+      "name": "Factions.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Factions.csv",
+      "sha256": "562f3f83aa09ed5bdfd160a79d0b734c6073818770c1d8807bcfd8fba1a3b9ef",
+      "bytes": 1955
+    },
+    {
+      "name": "Last_update.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Last_update.csv",
+      "sha256": "f408f381f06aa6732782330dcae5c4cd5d2df1c5a2f9f30975cf982dc581ec6f",
+      "bytes": 39
+    },
+    {
+      "name": "Source.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Source.csv",
+      "sha256": "92fa0a05e70f840038760a18866c2861ad772ed0137a8e554ca8fbf6f1a5779a",
+      "bytes": 9388
+    },
+    {
+      "name": "Stratagems.csv",
+      "url": "http://wahapedia.ru/wh40k10ed/Stratagems.csv",
+      "sha256": "493599d1f979b27b4d174bfe5fde4f1d4a3dafcede926a9f08fea959411436ed",
+      "bytes": 1060678
+    }
+  ]
+}

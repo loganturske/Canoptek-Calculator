@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "canoptek-calculator"
+version = "0.1.0"
+description = "Warhammer 40,000 Wahapedia importer, database, and simulation workbench."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "bleach>=6.2.0",
+  "fastapi>=0.116.0",
+  "httpx>=0.28.1",
+  "jinja2>=3.1.6",
+  "pydantic>=2.11.0",
+  "pydantic-settings>=2.10.1",
+  "sqlalchemy>=2.0.41",
+  "typer>=0.16.0",
+  "uvicorn[standard]>=0.35.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0",
+  "pytest-cov>=6.0.0",
+  "ruff>=0.12.0",
+]
+
+[project.scripts]
+canoptek = "canoptek_calculator.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/canoptek_calculator"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["B", "C4", "E", "F", "I", "N", "SIM", "UP"]
+ignore = ["B008"]

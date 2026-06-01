@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: canoptek-calculator-public-app
+    env_file:
+      - .env.public
+    expose:
+      - "8000"
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./fixtures:/app/fixtures
+    networks:
+      - canoptek-public
+
+  caddy:
+    image: caddy:2.10
+    container_name: canoptek-calculator-caddy
+    depends_on:
+      - app
+    env_file:
+      - .env.public
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - canoptek-public
+
+networks:
+  canoptek-public:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Warhammer 40,000 data workbench</p>
+    <h1>Canoptek Calculator</h1>
+    <p class="hero-text">
+      Download the live Wahapedia 40k export, load it into a searchable database, and run damage simulations from the same interface.
+    </p>
+  </div>
+  <div class="hero-panel">
+    <p class="hero-panel-label">Deployment</p>
+    <p class="hero-panel-value">Single-container FastAPI app</p>
+    <p class="hero-panel-meta">Fixtures land in <code>{{ stats.fixtures_dir }}</code></p>
+  </div>
+</header>
+
+<main class="workspace">
+  <section class="card card-status">
+    <div class="card-header">
+      <div>
+        <p class="section-label">Data control</p>
+        <h2>Wahapedia sync</h2>
+      </div>
+      <button id="sync-button" class="button button-primary">Refresh data</button>
+    </div>
+    <div id="sync-status" class="status-message">Ready.</div>
+    <div class="stats-grid">
+      <article class="stat">
+        <span class="stat-label">Factions</span>
+        <strong id="stat-factions">{{ stats.faction_count }}</strong>
+      </article>
+      <article class="stat">
+        <span class="stat-label">Datasheets</span>
+        <strong id="stat-datasheets">{{ stats.datasheet_count }}</strong>
+      </article>
+      <article class="stat">
+        <span class="stat-label">Weapons</span>
+        <strong id="stat-weapons">{{ stats.weapon_count }}</strong>
+      </article>
+      <article class="stat">
+        <span class="stat-label">Fixture files</span>
+        <strong id="stat-files">{{ stats.fixture_file_count }}</strong>
+      </article>
+    </div>
+    <dl class="meta-list">
+      <div>
+        <dt>Fixtures</dt>
+        <dd id="meta-fixtures">{{ stats.fixtures_dir }}</dd>
+      </div>
+      <div>
+        <dt>Wahapedia last update</dt>
+        <dd id="meta-last-update">{{ stats.last_update or "Not imported yet" }}</dd>
+      </div>
+      <div>
+        <dt>Last download</dt>
+        <dd id="meta-last-download">{{ stats.last_downloaded_at or "Not downloaded yet" }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="card card-sim">
+    <div class="card-header">
+      <div>
+        <p class="section-label">Simulation forge</p>
+        <h2>Run an attack sequence</h2>
+      </div>
+    </div>
+    <form id="simulation-form" class="sim-form">
+      <div class="form-grid">
+        <label class="field">
+          <span>Attacker datasheet</span>
+          <input id="attacker-input" list="datasheet-options" placeholder="Start typing a datasheet…" />
+        </label>
+        <label class="field">
+          <span>Weapon profile</span>
+          <select id="weapon-select">
+            <option value="">Select an attacker first</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Attacking models</span>
+          <input id="attacker-models" type="number" min="1" max="60" value="1" />
+        </label>
+        <label class="field">
+          <span>Trials</span>
+          <input id="simulation-trials" type="number" min="100" max="50000" value="{{ settings.default_simulation_trials }}" />
+        </label>
+        <label class="field">
+          <span>Hit rerolls</span>
+          <select id="hit-reroll">
+            <option value="none">None</option>
+            <option value="ones">Reroll 1s</option>
+            <option value="fails">Reroll all fails</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Wound rerolls</span>
+          <select id="wound-reroll">
+            <option value="none">None</option>
+            <option value="ones">Reroll 1s</option>
+            <option value="fails">Reroll all fails</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Hit modifier</span>
+          <select id="hit-modifier">
+            <option value="-1">-1</option>
+            <option value="0" selected>0</option>
+            <option value="1">+1</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Wound modifier</span>
+          <select id="wound-modifier">
+            <option value="-1">-1</option>
+            <option value="0" selected>0</option>
+            <option value="1">+1</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="toggle-grid">
+        <label class="toggle"><input id="half-range" type="checkbox" /> <span>Half range</span></label>
+        <label class="toggle"><input id="stationary" type="checkbox" /> <span>Stationary</span></label>
+        <label class="toggle"><input id="charged" type="checkbox" /> <span>Charged this turn</span></label>
+        <label class="toggle"><input id="target-cover" type="checkbox" /> <span>Target in cover</span></label>
+      </div>
+
+      <div class="segmented">
+        <button type="button" class="segment active" data-mode="datasheet">Defender datasheet</button>
+        <button type="button" class="segment" data-mode="custom">Custom target</button>
+      </div>
+
+      <div id="datasheet-target-panel" class="target-panel">
+        <div class="form-grid">
+          <label class="field">
+            <span>Defender datasheet</span>
+            <input id="defender-input" list="datasheet-options" placeholder="Select a target datasheet…" />
+          </label>
+          <label class="field">
+            <span>Defender model line</span>
+            <select id="defender-model-select">
+              <option value="">Select a target first</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Target models in unit</span>
+            <input id="target-model-count" type="number" min="1" max="60" value="1" />
+          </label>
+        </div>
+      </div>
+
+      <div id="custom-target-panel" class="target-panel hidden">
+        <div class="form-grid">
+          <label class="field">
+            <span>Target name</span>
+            <input id="custom-target-name" value="Custom Target" />
+          </label>
+          <label class="field">
+            <span>Toughness</span>
+            <input id="custom-target-toughness" type="number" min="1" max="40" value="4" />
+          </label>
+          <label class="field">
+            <span>Save</span>
+            <input id="custom-target-save" type="number" min="2" max="7" value="3" />
+          </label>
+          <label class="field">
+            <span>Invulnerable save</span>
+            <input id="custom-target-invuln" type="number" min="2" max="7" placeholder="Optional" />
+          </label>
+          <label class="field">
+            <span>Wounds per model</span>
+            <input id="custom-target-wounds" type="number" min="1" max="99" value="2" />
+          </label>
+          <label class="field field-wide">
+            <span>Keywords</span>
+            <input id="custom-target-keywords" placeholder="e.g. Infantry, Character, Vehicle" />
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="button button-primary" type="submit">Run simulation</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card card-results">
+    <div class="card-header">
+      <div>
+        <p class="section-label">Results</p>
+        <h2>Combat output</h2>
+      </div>
+    </div>
+    <div id="results-panel" class="results-placeholder">
+      Select an attacker, pick a weapon, and choose a target to see both expected values and Monte Carlo results.
+    </div>
+  </section>
+
+  <section class="card card-browser">
+    <div class="card-header">
+      <div>
+        <p class="section-label">Datasheet explorer</p>
+        <h2>Search the imported catalogue</h2>
+      </div>
+    </div>
+    <div class="browser-controls">
+      <label class="field">
+        <span>Search</span>
+        <input id="browser-search" placeholder="Filter datasheets by name…" />
+      </label>
+      <label class="field">
+        <span>Faction</span>
+        <select id="browser-faction">
+          <option value="">All factions</option>
+          {% for faction in factions %}
+          <option value="{{ faction.id }}">{{ faction.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <div class="browser-grid">
+      <div id="browser-list" class="browser-list">
+        <p class="empty-state">Loading datasheets…</p>
+      </div>
+      <div id="datasheet-detail" class="browser-detail">
+        <p class="empty-state">Choose a datasheet to inspect its weapons, costs, and rules.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<datalist id="datasheet-options"></datalist>
+
+<script>
+  window.__CANOPTEK_BOOTSTRAP__ = {
+    stats: {{ stats_payload | tojson }},
+    factions: {{ factions_payload | tojson }},
+    defaultTrials: {{ settings.default_simulation_trials }},
+  };
+</script>
+{% endblock %}
