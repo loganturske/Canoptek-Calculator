@@ -51,7 +51,9 @@ def test_trusted_host_middleware_rejects_unexpected_hosts(isolated_environment) 
         assert response.status_code == 400
 
 
-def test_homepage_uses_root_relative_static_assets(isolated_environment) -> None:
+def test_homepage_includes_static_assets_and_error_popup(
+    isolated_environment,
+) -> None:
     service = DataImportService.from_defaults()
     service.import_fixtures(isolated_environment)
 
@@ -61,3 +63,5 @@ def test_homepage_uses_root_relative_static_assets(isolated_environment) -> None
         assert response.status_code == 200
         assert 'href="/static/css/app.css"' in response.text
         assert 'src="/static/js/app.js"' in response.text
+        assert 'id="error-popup"' in response.text
+        assert 'id="error-popup-retry"' in response.text
