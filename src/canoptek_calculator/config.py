@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     max_simulation_trials: int = 50000
     auto_sync_on_startup: bool = False
     app_allowed_hosts: str = "127.0.0.1,localhost,testserver"
+    unit_effect_ai_enabled: bool = False
+    unit_effect_ai_model: str = "gpt-5-mini"
+    unit_effect_ai_base_url: str = "https://api.openai.com/v1"
+    unit_effect_ai_timeout_seconds: float = 45.0
+    unit_effect_ai_batch_size: int = 12
+    openai_api_key: str | None = None
 
     @property
     def allowed_hosts(self) -> list[str]:

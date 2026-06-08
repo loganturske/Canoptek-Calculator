@@ -9,12 +9,20 @@ It downloads the published CSV export into a local fixture directory, validates 
 - A FastAPI application with a built-in frontend for:
   - refreshing Wahapedia 40k export data
   - browsing imported datasheets
+  - building and saving army lists with tracked points totals
+  - loading saved roster units directly into simulations
+  - attaching leaders and toggling imported structured unit effects in the Simulation Forge
   - running expected-value and Monte Carlo combat calculations
 - A robust ingestion pipeline that:
   - discovers the current export file list from Wahapedia's published workbook
   - stores CSVs in `fixtures/wahapedia/wh40k10ed`
   - validates rows with typed Pydantic schemas
   - bulk-loads SQLAlchemy models into the database
+  - persists structured combat effects for unit abilities during import/sync time
+- An AI-ready interpretation layer that:
+  - can call OpenAI during import/sync to translate ability text into a structured effect DSL
+  - falls back to the deterministic built-in parser when AI is disabled or unavailable
+  - keeps simulation runtime deterministic by executing only stored structured effects
 - A simulation engine that works from imported weapon/model profiles
 - A Docker image and `docker-compose.yml`
 - Tests and Ruff linting
@@ -38,7 +46,7 @@ src/canoptek_calculator/
   ingest/       Wahapedia workbook parsing, CSV download, validation, import
   models/       SQLAlchemy ORM models
   schemas/      API request and response models
-  services/     Catalog and simulation orchestration
+  services/     Army list, catalog, and simulation orchestration
   static/       CSS and JavaScript
   templates/    Jinja templates
 fixtures/
@@ -216,6 +224,8 @@ python -m canoptek_calculator.cli import-fixtures
 python -m canoptek_calculator.cli sync
 ```
 
+`sync` and `bootstrap` also rebuild the stored structured-effect catalogue used by the Simulation Forge.
+
 ### Bootstrap the app for first run
 
 ```bash
@@ -238,6 +248,12 @@ Copy `.env.example` if you want local overrides.
 | `FIXTURES_DIR` | `fixtures/wahapedia/wh40k10ed` | Where downloaded CSVs are stored |
 | `AUTO_SYNC_ON_STARTUP` | `false` | If `true`, the app syncs data during startup |
 | `APP_ALLOWED_HOSTS` | `127.0.0.1,localhost,testserver` | Comma-separated trusted hostnames for Host header validation |
+| `UNIT_EFFECT_AI_ENABLED` | `false` | Enables OpenAI-backed ability interpretation during import/sync |
+| `UNIT_EFFECT_AI_MODEL` | `gpt-5-mini` | Model used for import-time ability interpretation |
+| `UNIT_EFFECT_AI_BASE_URL` | `https://api.openai.com/v1` | Base URL for the OpenAI Responses API |
+| `UNIT_EFFECT_AI_TIMEOUT_SECONDS` | `45` | Timeout for each AI interpretation batch |
+| `UNIT_EFFECT_AI_BATCH_SIZE` | `12` | Number of abilities sent per AI interpretation batch |
+| `OPENAI_API_KEY` | _(empty)_ | API key used when `UNIT_EFFECT_AI_ENABLED=true` |
 
 ## Simulation coverage
 
@@ -257,6 +273,8 @@ The simulation engine currently models these weapon keywords when present in Wah
 - `ignores cover`
 
 The UI also shows any parsed rules that are not currently modeled in the engine, so you can see when a result is only partially represented.
+
+Attached-unit abilities are interpreted at import/sync time and stored as structured effects. In the Simulation Forge, those effects start in their imported default state and can be toggled on or off per attack sequence when you need to model a conditional rule or override a bad interpretation.
 
 ### Outputs
 
@@ -312,6 +330,19 @@ GET /api/datasheets/{datasheet_id}
 POST /api/sync
 ```
 
+### Army list endpoints
+
+```http
+GET    /api/army-lists
+POST   /api/army-lists
+GET    /api/army-lists/{army_list_id}
+PATCH  /api/army-lists/{army_list_id}
+DELETE /api/army-lists/{army_list_id}
+POST   /api/army-lists/{army_list_id}/entries
+PATCH  /api/army-lists/{army_list_id}/entries/{entry_id}
+DELETE /api/army-lists/{army_list_id}/entries/{entry_id}
+```
+
 ### Run a simulation
 
 ```http
@@ -331,6 +362,17 @@ Example payload:
   "trials": 5000
 }
 ```
+
+## Roster workflow
+
+Use the **Roster Foundry** panel in the main UI to:
+
+- create a named army list for a single faction
+- add saved units with datasheet, model line, unit size, quantity, notes, and tracked points
+- edit or remove saved units later
+- load a saved unit into the attacker or defender side of the simulation form with one click
+
+Saved army lists are kept in the application database and survive Wahapedia refreshes. If a future data import can no longer resolve a saved datasheet or model line, the UI keeps the roster entry and flags it as stale instead of silently deleting it.
 
 ## Quality checks
 

@@ -73,6 +73,15 @@ class RuleReferenceRead(BaseModel):
     description_html: str | None = None
 
 
+class DatasheetReferenceRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    name: str
+    faction_name: str
+    role: str | None = None
+
+
 class ModelProfileRead(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -130,6 +139,7 @@ class DatasheetDetailRead(BaseModel):
     link: str | None = None
     keywords: list[str] = Field(default_factory=list)
     abilities: list[DatasheetAbilityRead] = Field(default_factory=list)
+    attachable_leaders: list[DatasheetReferenceRead] = Field(default_factory=list)
     options: list[DatasheetOptionRead] = Field(default_factory=list)
     unit_composition: list[str] = Field(default_factory=list)
     costs: list[DatasheetCostRead] = Field(default_factory=list)
@@ -138,6 +148,104 @@ class DatasheetDetailRead(BaseModel):
     stratagems: list[RuleReferenceRead] = Field(default_factory=list)
     enhancements: list[RuleReferenceRead] = Field(default_factory=list)
     detachment_abilities: list[RuleReferenceRead] = Field(default_factory=list)
+
+
+class ArmyListCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1, max_length=120)
+    faction_id: str = Field(min_length=1, max_length=32)
+    notes: str | None = Field(default=None, max_length=4000)
+
+
+class ArmyListUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    faction_id: str | None = Field(default=None, min_length=1, max_length=32)
+    notes: str | None = Field(default=None, max_length=4000)
+
+
+class ArmyListEntryCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    datasheet_id: str = Field(min_length=1, max_length=32)
+    model_line: int | None = Field(default=None, ge=1, le=20)
+    unit_size: int = Field(ge=1, le=60)
+    quantity: int = Field(default=1, ge=1, le=12)
+    points_each: int | None = Field(default=None, ge=0, le=5000)
+    cost_label: str | None = Field(default=None, max_length=255)
+    nickname: str | None = Field(default=None, max_length=255)
+    notes: str | None = Field(default=None, max_length=4000)
+    sort_order: int | None = Field(default=None, ge=0, le=10000)
+
+
+class ArmyListEntryUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    datasheet_id: str | None = Field(default=None, min_length=1, max_length=32)
+    model_line: int | None = Field(default=None, ge=1, le=20)
+    unit_size: int | None = Field(default=None, ge=1, le=60)
+    quantity: int | None = Field(default=None, ge=1, le=12)
+    points_each: int | None = Field(default=None, ge=0, le=5000)
+    cost_label: str | None = Field(default=None, max_length=255)
+    nickname: str | None = Field(default=None, max_length=255)
+    notes: str | None = Field(default=None, max_length=4000)
+    sort_order: int | None = Field(default=None, ge=0, le=10000)
+
+
+class ArmyListEntryRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: int
+    army_list_id: int
+    display_name: str
+    datasheet_id: str
+    datasheet_name: str
+    datasheet_role: str | None = None
+    datasheet_link: str | None = None
+    datasheet_available: bool
+    model_line: int | None = None
+    model_profile_id: int | None = None
+    model_name: str | None = None
+    model_available: bool | None = None
+    unit_size: int
+    quantity: int
+    entry_model_count: int
+    points_each: int | None = None
+    total_points: int | None = None
+    cost_label: str | None = None
+    nickname: str | None = None
+    notes: str | None = None
+    sort_order: int
+    reference_warning: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ArmyListSummaryRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: int
+    name: str
+    faction_id: str
+    faction_name: str
+    faction_available: bool
+    notes: str | None = None
+    entry_count: int
+    total_units: int
+    total_models: int
+    total_points: int
+    has_unpriced_entries: bool
+    has_stale_entries: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class ArmyListDetailRead(ArmyListSummaryRead):
+    model_config = ConfigDict(extra="forbid")
+
+    entries: list[ArmyListEntryRead] = Field(default_factory=list)
 
 
 class HistogramBucketRead(BaseModel):
@@ -177,6 +285,8 @@ class SimulationResponse(BaseModel):
 
     weapon_name: str
     target_name: str
+    attacker_leaders: list[str] = Field(default_factory=list)
+    applied_effects: list[str] = Field(default_factory=list)
     supported_rules: list[str]
     ignored_rules: list[str]
     effective_hit_modifier: int
@@ -185,11 +295,54 @@ class SimulationResponse(BaseModel):
     monte_carlo: SimulationMonteCarloRead
 
 
+class SimulationBuildEffectRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    source_datasheet_id: str
+    source_name: str
+    ability_name: str
+    summary: str
+    effect_type: str
+    scope: Literal["any", "ranged", "melee"] = "any"
+    selectable: bool = True
+    enabled_by_default: bool = True
+
+
+class SimulationBuildPreviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    attacker_datasheet_id: str = Field(min_length=1, max_length=32)
+    attacker_leader_ids: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_attacker_leaders(self) -> SimulationBuildPreviewRequest:
+        if len(self.attacker_leader_ids) > 1:
+            raise ValueError(
+                "Only one attached leader is currently supported in the Simulation Forge."
+            )
+        if len(set(self.attacker_leader_ids)) != len(self.attacker_leader_ids):
+            raise ValueError("Leader selections must be unique.")
+        return self
+
+
+class SimulationBuildPreviewRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    attacker_id: str
+    attacker_name: str
+    selected_leaders: list[DatasheetReferenceRead] = Field(default_factory=list)
+    effects: list[SimulationBuildEffectRead] = Field(default_factory=list)
+    unmodeled_abilities: list[str] = Field(default_factory=list)
+
+
 class SimulationRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     attacker_weapon_id: int = Field(gt=0)
     attacker_models: int = Field(default=1, ge=1, le=60)
+    attacker_leader_ids: list[str] = Field(default_factory=list)
+    attacker_enabled_effect_ids: list[str] | None = None
     defender_mode: Literal["datasheet", "custom"] = "datasheet"
     defender_model_id: int | None = Field(default=None, gt=0)
     target_model_count: int = Field(default=1, ge=1, le=60)
@@ -212,6 +365,17 @@ class SimulationRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_target_selection(self) -> SimulationRequest:
+        if len(self.attacker_leader_ids) > 1:
+            raise ValueError(
+                "Only one attached leader is currently supported in the Simulation Forge."
+            )
+        if len(set(self.attacker_leader_ids)) != len(self.attacker_leader_ids):
+            raise ValueError("Leader selections must be unique.")
+        if self.attacker_enabled_effect_ids is not None and len(
+            set(self.attacker_enabled_effect_ids)
+        ) != len(self.attacker_enabled_effect_ids):
+            raise ValueError("Simulation effect selections must be unique.")
+
         if self.defender_mode == "datasheet" and self.defender_model_id is None:
             raise ValueError("A defender model must be selected in datasheet mode.")
 

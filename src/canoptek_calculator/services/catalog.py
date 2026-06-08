@@ -14,6 +14,7 @@ from ..models import (
     DatasheetDetachmentAbility,
     DatasheetEnhancement,
     DatasheetKeyword,
+    DatasheetLeader,
     DatasheetModel,
     DatasheetModelCost,
     DatasheetOption,
@@ -33,6 +34,7 @@ from ..schemas.api import (
     DatasheetCostRead,
     DatasheetDetailRead,
     DatasheetOptionRead,
+    DatasheetReferenceRead,
     DatasheetSummaryRead,
     FactionRead,
     ModelProfileRead,
@@ -172,6 +174,13 @@ class CatalogService:
             .where(DatasheetWargear.datasheet_id == datasheet_id)
             .order_by(DatasheetWargear.line.asc(), DatasheetWargear.line_in_wargear.asc())
         ).all()
+        attachable_leaders = self.session.execute(
+            select(Datasheet.id, Datasheet.name, Faction.name, Datasheet.role)
+            .join(DatasheetLeader, Datasheet.id == DatasheetLeader.leader_id)
+            .join(Faction, Datasheet.faction_id == Faction.id)
+            .where(DatasheetLeader.attached_id == datasheet_id)
+            .order_by(Datasheet.name.asc())
+        ).all()
 
         stratagems = (
             self.session.execute(
@@ -234,6 +243,15 @@ class CatalogService:
                     ),
                 )
                 for ability_row, inherited_name, inherited_description in abilities
+            ],
+            attachable_leaders=[
+                DatasheetReferenceRead(
+                    id=leader_id,
+                    name=leader_name,
+                    faction_name=leader_faction_name,
+                    role=leader_role,
+                )
+                for leader_id, leader_name, leader_faction_name, leader_role in attachable_leaders
             ],
             options=[
                 DatasheetOptionRead(

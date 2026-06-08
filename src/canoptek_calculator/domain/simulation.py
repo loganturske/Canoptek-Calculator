@@ -186,6 +186,13 @@ class AttackContext:
     wound_reroll: RerollMode = "none"
     hit_modifier: int = 0
     wound_modifier: int = 0
+    bonus_hit_modifier: int = 0
+    bonus_wound_modifier: int = 0
+    hit_crit_threshold: int = 6
+    granted_wound_reroll: RerollMode | None = None
+    granted_lethal_hits: bool = False
+    granted_sustained_hits: DiceExpression | None = None
+    applied_effects: tuple[str, ...] = ()
     half_range: bool = False
     stationary: bool = False
     charged: bool = False
@@ -232,6 +239,7 @@ class MonteCarloOutcome:
 class CombatSimulationResult:
     expected: ExpectedCombatOutcome
     monte_carlo: MonteCarloOutcome
+    applied_effects: tuple[str, ...]
     supported_rules: tuple[str, ...]
     ignored_rules: tuple[str, ...]
     effective_hit_modifier: int
@@ -567,12 +575,37 @@ def effective_hit_modifier(weapon: CombatWeaponProfile, context: AttackContext) 
     extra = (
         1 if context.stationary and weapon.rules.heavy and weapon.kind.lower() == "ranged" else 0
     )
-    return clamp_modifier(context.hit_modifier + extra)
+    return clamp_modifier(context.hit_modifier + context.bonus_hit_modifier + extra)
 
 
 def effective_wound_modifier(weapon: CombatWeaponProfile, context: AttackContext) -> int:
     extra = 1 if context.charged and weapon.rules.lance and weapon.kind.lower() == "melee" else 0
-    return clamp_modifier(context.wound_modifier + extra)
+    return clamp_modifier(context.wound_modifier + context.bonus_wound_modifier + extra)
+
+
+def merge_reroll_modes(base: RerollMode, granted: RerollMode | None) -> RerollMode:
+    if base == "fails" or granted == "fails":
+        return "fails"
+    if base == "ones" or granted == "ones":
+        return "ones"
+    return "none"
+
+
+def effective_lethal_hits(weapon: CombatWeaponProfile, context: AttackContext) -> bool:
+    return weapon.rules.lethal_hits or context.granted_lethal_hits
+
+
+def effective_sustained_hits(
+    weapon: CombatWeaponProfile,
+    context: AttackContext,
+) -> DiceExpression | None:
+    if weapon.rules.sustained_hits is None:
+        return context.granted_sustained_hits
+    if context.granted_sustained_hits is None:
+        return weapon.rules.sustained_hits
+    if context.granted_sustained_hits.mean() > weapon.rules.sustained_hits.mean():
+        return context.granted_sustained_hits
+    return weapon.rules.sustained_hits
 
 
 def anti_threshold_for_target(weapon: CombatWeaponProfile, target: TargetProfile) -> int:
@@ -677,6 +710,7 @@ class CombatSimulator:
         return CombatSimulationResult(
             expected=expected,
             monte_carlo=monte_carlo,
+            applied_effects=context.applied_effects,
             supported_rules=weapon.rules.supported_rules,
             ignored_rules=weapon.rules.ignored_rules,
             effective_hit_modifier=hit_modifier,
@@ -705,12 +739,13 @@ class CombatSimulator:
                 weapon.skill or 7,
                 hit_modifier,
                 context.hit_reroll,
+                crit_threshold=context.hit_crit_threshold,
             )
-            sustained_hits = (
-                weapon.rules.sustained_hits.mean() if weapon.rules.sustained_hits else 0.0
-            )
+            sustained_profile = effective_sustained_hits(weapon, context)
+            sustained_hits = sustained_profile.mean() if sustained_profile else 0.0
+            lethal_hits = effective_lethal_hits(weapon, context)
 
-            if weapon.rules.lethal_hits:
+            if lethal_hits:
                 auto_wounds = total_attacks * hit_chances.crit
                 wound_rolls = total_attacks * (
                     hit_chances.success_noncrit + (hit_chances.crit * sustained_hits)
@@ -726,8 +761,9 @@ class CombatSimulator:
                 expected_hits = wound_rolls
 
         crit_threshold = anti_threshold_for_target(weapon, target)
-        wound_reroll_mode: RerollMode = (
-            "fails" if weapon.rules.twin_linked else context.wound_reroll
+        wound_reroll_mode = merge_reroll_modes(
+            "fails" if weapon.rules.twin_linked else context.wound_reroll,
+            context.granted_wound_reroll,
         )
         wound_chances = average_roll_probabilities(
             weapon.strength,
@@ -773,9 +809,12 @@ class CombatSimulator:
         rng = random.Random(context.seed)
         required_save = save_target(weapon, target)
         critical_wound_threshold = anti_threshold_for_target(weapon, target)
-        wound_reroll_mode: RerollMode = (
-            "fails" if weapon.rules.twin_linked else context.wound_reroll
+        wound_reroll_mode = merge_reroll_modes(
+            "fails" if weapon.rules.twin_linked else context.wound_reroll,
+            context.granted_wound_reroll,
         )
+        lethal_hits = effective_lethal_hits(weapon, context)
+        sustained_profile = effective_sustained_hits(weapon, context)
         wounds_lost_results: list[int] = []
         raw_damage_results: list[int] = []
         models_slain_results: list[int] = []
@@ -800,15 +839,15 @@ class CombatSimulator:
                             threshold=weapon.skill or 7,
                             modifier=hit_modifier,
                             reroll_mode=context.hit_reroll,
-                            crit_threshold=6,
+                            crit_threshold=context.hit_crit_threshold,
                             rng=rng,
                         )
                         if hit_result == "fail":
                             continue
                         if hit_result == "crit":
-                            if weapon.rules.sustained_hits:
-                                normal_hits += weapon.rules.sustained_hits.roll(rng)
-                            if weapon.rules.lethal_hits:
+                            if sustained_profile:
+                                normal_hits += sustained_profile.roll(rng)
+                            if lethal_hits:
                                 auto_wounds += 1
                             else:
                                 normal_hits += 1

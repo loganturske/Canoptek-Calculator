@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from ..config import get_settings
 from ..db import get_engine, get_session_factory, initialize_database
-from ..models import Base, Datasheet
+from ..models import Base, Datasheet, DatasheetAbilityInterpretation, DatasheetStructuredEffect
+from ..services.ability_interpretation import AbilityInterpretationService
 from .registry import EXPORT_TABLES, ExportTableDefinition
 from .wahapedia import FixtureManifest, WahapediaClient
 
@@ -72,6 +73,9 @@ class DataImportService:
                 tables=tables,
             )
 
+        if not self.structured_effects_available():
+            self.refresh_structured_effects()
+
         return DataSyncResult(
             fixtures_dir=str(self.fixtures_dir),
             downloaded=downloaded,
@@ -113,6 +117,8 @@ class DataImportService:
                 imported_rows = self._import_table(session, target_dir, table)
                 results.append(TableImportResult(table=table.filename, rows_imported=imported_rows))
                 session.commit()
+            AbilityInterpretationService(session).refresh()
+            session.commit()
         return results
 
     def fixtures_available(self) -> bool:
@@ -124,6 +130,17 @@ class DataImportService:
         with self.session_factory() as session:
             count = session.scalar(select(func.count()).select_from(Datasheet))
         return bool(count)
+
+    def structured_effects_available(self) -> bool:
+        with self.session_factory() as session:
+            count = session.scalar(select(func.count()).select_from(DatasheetAbilityInterpretation))
+        return bool(count)
+
+    def refresh_structured_effects(self) -> None:
+        initialize_database()
+        with self.session_factory() as session:
+            AbilityInterpretationService(session).refresh()
+            session.commit()
 
     def _validate_fixture_directory(self, fixtures_dir: Path) -> None:
         missing = [
@@ -137,8 +154,14 @@ class DataImportService:
             )
 
     def _reset_schema(self) -> None:
-        Base.metadata.drop_all(self.engine)
-        Base.metadata.create_all(self.engine)
+        import_tables = [table.orm_model.__table__ for table in EXPORT_TABLES]
+        derived_tables = [
+            DatasheetAbilityInterpretation.__table__,
+            DatasheetStructuredEffect.__table__,
+        ]
+        reset_tables = import_tables + derived_tables
+        Base.metadata.drop_all(self.engine, tables=reset_tables)
+        Base.metadata.create_all(self.engine, tables=reset_tables)
 
     def _import_table(
         self,

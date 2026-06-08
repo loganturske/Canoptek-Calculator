@@ -1,6 +1,8 @@
 """ORM models for Wahapedia export data."""
 
+from .army_lists import ArmyList, ArmyListEntry
 from .base import Base
+from .unit_effects import DatasheetAbilityInterpretation, DatasheetStructuredEffect
 from .wahapedia import (
     Ability,
     Datasheet,
@@ -26,9 +28,12 @@ from .wahapedia import (
 
 __all__ = [
     "Ability",
+    "ArmyList",
+    "ArmyListEntry",
     "Base",
     "Datasheet",
     "DatasheetAbility",
+    "DatasheetAbilityInterpretation",
     "DatasheetDetachmentAbility",
     "DatasheetEnhancement",
     "DatasheetKeyword",
@@ -37,6 +42,7 @@ __all__ = [
     "DatasheetModelCost",
     "DatasheetOption",
     "DatasheetStratagem",
+    "DatasheetStructuredEffect",
     "DatasheetUnitComposition",
     "DatasheetWargear",
     "Detachment",

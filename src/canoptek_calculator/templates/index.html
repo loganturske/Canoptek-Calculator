@@ -15,218 +15,464 @@
   </div>
 </header>
 
-<main class="workspace">
-  <section class="card card-status">
-    <div class="card-header">
-      <div>
-        <p class="section-label">Data control</p>
-        <h2>Wahapedia sync</h2>
-      </div>
-      <button id="sync-button" class="button button-primary">Refresh data</button>
-    </div>
-    <div id="sync-status" class="status-message">Ready.</div>
-    <div class="stats-grid">
-      <article class="stat">
-        <span class="stat-label">Factions</span>
-        <strong id="stat-factions">{{ stats.faction_count }}</strong>
-      </article>
-      <article class="stat">
-        <span class="stat-label">Datasheets</span>
-        <strong id="stat-datasheets">{{ stats.datasheet_count }}</strong>
-      </article>
-      <article class="stat">
-        <span class="stat-label">Weapons</span>
-        <strong id="stat-weapons">{{ stats.weapon_count }}</strong>
-      </article>
-      <article class="stat">
-        <span class="stat-label">Fixture files</span>
-        <strong id="stat-files">{{ stats.fixture_file_count }}</strong>
-      </article>
-    </div>
-    <dl class="meta-list">
-      <div>
-        <dt>Fixtures</dt>
-        <dd id="meta-fixtures">{{ stats.fixtures_dir }}</dd>
-      </div>
-      <div>
-        <dt>Wahapedia last update</dt>
-        <dd id="meta-last-update">{{ stats.last_update or "Not imported yet" }}</dd>
-      </div>
-      <div>
-        <dt>Last download</dt>
-        <dd id="meta-last-download">{{ stats.last_downloaded_at or "Not downloaded yet" }}</dd>
-      </div>
-    </dl>
-  </section>
+<main class="workspace-shell">
+  <div class="workspace-tabs" role="tablist" aria-label="Primary workspace views">
+    <button
+      id="workspace-tab-workbench"
+      class="workspace-tab is-active"
+      type="button"
+      role="tab"
+      aria-selected="true"
+      aria-controls="workspace-panel-workbench"
+      data-workspace-tab="workbench"
+    >
+      <span class="workspace-tab-label">Workbench</span>
+      <span class="workspace-tab-copy">Run simulations, inspect datasheets, and refresh imported data from one page.</span>
+    </button>
+    <button
+      id="workspace-tab-roster"
+      class="workspace-tab"
+      type="button"
+      role="tab"
+      aria-selected="false"
+      aria-controls="workspace-panel-roster"
+      data-workspace-tab="roster"
+      tabindex="-1"
+    >
+      <span class="workspace-tab-label">Roster Foundry</span>
+      <span class="workspace-tab-copy">Build and save army lists in a dedicated planning view.</span>
+    </button>
+  </div>
 
-  <section class="card card-sim">
-    <div class="card-header">
-      <div>
-        <p class="section-label">Simulation forge</p>
-        <h2>Run an attack sequence</h2>
-      </div>
-    </div>
-    <form id="simulation-form" class="sim-form">
-      <div class="form-grid">
-        <label class="field">
-          <span>Attacker datasheet</span>
-          <input id="attacker-input" list="datasheet-options" placeholder="Start typing a datasheet…" />
-        </label>
-        <label class="field">
-          <span>Weapon profile</span>
-          <select id="weapon-select">
-            <option value="">Select an attacker first</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Attacking models</span>
-          <input id="attacker-models" type="number" min="1" max="60" value="1" />
-        </label>
-        <label class="field">
-          <span>Trials</span>
-          <input id="simulation-trials" type="number" min="100" max="50000" value="{{ settings.default_simulation_trials }}" />
-        </label>
-        <label class="field">
-          <span>Hit rerolls</span>
-          <select id="hit-reroll">
-            <option value="none">None</option>
-            <option value="ones">Reroll 1s</option>
-            <option value="fails">Reroll all fails</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Wound rerolls</span>
-          <select id="wound-reroll">
-            <option value="none">None</option>
-            <option value="ones">Reroll 1s</option>
-            <option value="fails">Reroll all fails</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Hit modifier</span>
-          <select id="hit-modifier">
-            <option value="-1">-1</option>
-            <option value="0" selected>0</option>
-            <option value="1">+1</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Wound modifier</span>
-          <select id="wound-modifier">
-            <option value="-1">-1</option>
-            <option value="0" selected>0</option>
-            <option value="1">+1</option>
-          </select>
-        </label>
-      </div>
+  <section
+    id="workspace-panel-workbench"
+    class="workspace-panel"
+    role="tabpanel"
+    aria-labelledby="workspace-tab-workbench"
+    data-workspace-panel="workbench"
+  >
+    <div class="workspace workspace-workbench">
+      <section class="card card-sim">
+        <div class="card-header">
+          <div>
+            <p class="section-label">Simulation forge</p>
+            <h2>Run an attack sequence</h2>
+          </div>
+        </div>
+        <form id="simulation-form" class="sim-form">
+          <div class="form-grid">
+            <label class="field">
+              <span>Attacker datasheet</span>
+              <input id="attacker-input" list="datasheet-options" placeholder="Start typing a datasheet..." />
+            </label>
+            <label class="field">
+              <span>Weapon profile</span>
+              <select id="weapon-select">
+                <option value="">Select an attacker first</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Attacking models</span>
+              <input id="attacker-models" type="number" min="1" max="60" value="1" />
+            </label>
+            <label class="field">
+              <span>Trials</span>
+              <input id="simulation-trials" type="number" min="100" max="50000" value="{{ settings.default_simulation_trials }}" />
+            </label>
+            <label class="field">
+              <span>Hit rerolls</span>
+              <select id="hit-reroll">
+                <option value="none">None</option>
+                <option value="ones">Reroll 1s</option>
+                <option value="fails">Reroll all fails</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Wound rerolls</span>
+              <select id="wound-reroll">
+                <option value="none">None</option>
+                <option value="ones">Reroll 1s</option>
+                <option value="fails">Reroll all fails</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Hit modifier</span>
+              <select id="hit-modifier">
+                <option value="-1">-1</option>
+                <option value="0" selected>0</option>
+                <option value="1">+1</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Wound modifier</span>
+              <select id="wound-modifier">
+                <option value="-1">-1</option>
+                <option value="0" selected>0</option>
+                <option value="1">+1</option>
+              </select>
+            </label>
+          </div>
 
-      <div class="toggle-grid">
-        <label class="toggle"><input id="half-range" type="checkbox" /> <span>Half range</span></label>
-        <label class="toggle"><input id="stationary" type="checkbox" /> <span>Stationary</span></label>
-        <label class="toggle"><input id="charged" type="checkbox" /> <span>Charged this turn</span></label>
-        <label class="toggle"><input id="target-cover" type="checkbox" /> <span>Target in cover</span></label>
-      </div>
+          <section class="simulation-build-shell" aria-label="Attacker unit builder">
+            <div class="subpanel-header">
+              <div>
+                <p class="section-label">Attacker unit builder</p>
+                <h3>Attach leaders and tune structured effects</h3>
+              </div>
+            </div>
+            <div class="form-grid simulation-build-grid">
+              <label class="field field-wide">
+                <span>Attached leader</span>
+                <select id="attacker-leader-select">
+                  <option value="">No leader attached</option>
+                </select>
+              </label>
+            </div>
+            <p id="attacker-build-status" class="form-helper">
+              Choose an attacker datasheet to inspect valid leaders and imported unit effects.
+            </p>
+            <div id="attacker-build-effects" class="simulation-build-effects">
+              <p class="empty-state">
+                Choose an attacker datasheet to inspect attached leaders and structured effects.
+              </p>
+            </div>
+          </section>
 
-      <div class="segmented">
-        <button type="button" class="segment active" data-mode="datasheet">Defender datasheet</button>
-        <button type="button" class="segment" data-mode="custom">Custom target</button>
-      </div>
+          <div class="toggle-grid">
+            <label class="toggle"><input id="half-range" type="checkbox" /> <span>Half range</span></label>
+            <label class="toggle"><input id="stationary" type="checkbox" /> <span>Stationary</span></label>
+            <label class="toggle"><input id="charged" type="checkbox" /> <span>Charged this turn</span></label>
+            <label class="toggle"><input id="target-cover" type="checkbox" /> <span>Target in cover</span></label>
+          </div>
 
-      <div id="datasheet-target-panel" class="target-panel">
-        <div class="form-grid">
+          <div class="segmented">
+            <button type="button" class="segment active" data-mode="datasheet">Defender datasheet</button>
+            <button type="button" class="segment" data-mode="custom">Custom target</button>
+          </div>
+
+          <div id="datasheet-target-panel" class="target-panel">
+            <div class="form-grid">
+              <label class="field">
+                <span>Defender datasheet</span>
+                <input id="defender-input" list="datasheet-options" placeholder="Select a target datasheet..." />
+              </label>
+              <label class="field">
+                <span>Defender model line</span>
+                <select id="defender-model-select">
+                  <option value="">Select a target first</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Target models in unit</span>
+                <input id="target-model-count" type="number" min="1" max="60" value="1" />
+              </label>
+            </div>
+          </div>
+
+          <div id="custom-target-panel" class="target-panel hidden">
+            <div class="form-grid">
+              <label class="field">
+                <span>Target name</span>
+                <input id="custom-target-name" value="Custom Target" />
+              </label>
+              <label class="field">
+                <span>Toughness</span>
+                <input id="custom-target-toughness" type="number" min="1" max="40" value="4" />
+              </label>
+              <label class="field">
+                <span>Save</span>
+                <input id="custom-target-save" type="number" min="2" max="7" value="3" />
+              </label>
+              <label class="field">
+                <span>Invulnerable save</span>
+                <input id="custom-target-invuln" type="number" min="2" max="7" placeholder="Optional" />
+              </label>
+              <label class="field">
+                <span>Wounds per model</span>
+                <input id="custom-target-wounds" type="number" min="1" max="99" value="2" />
+              </label>
+              <label class="field field-wide">
+                <span>Keywords</span>
+                <input id="custom-target-keywords" placeholder="e.g. Infantry, Character, Vehicle" />
+              </label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="button button-primary" type="submit">Run simulation</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card card-results">
+        <div class="card-header">
+          <div>
+            <p class="section-label">Results</p>
+            <h2>Combat output</h2>
+          </div>
+        </div>
+        <div id="results-panel" class="results-placeholder">
+          Select an attacker, pick a weapon, and choose a target to see both expected values and Monte Carlo results.
+        </div>
+      </section>
+
+      <section class="card card-browser">
+        <div class="card-header">
+          <div>
+            <p class="section-label">Datasheet explorer</p>
+            <h2>Search the imported catalogue</h2>
+          </div>
+        </div>
+        <div class="browser-controls">
           <label class="field">
-            <span>Defender datasheet</span>
-            <input id="defender-input" list="datasheet-options" placeholder="Select a target datasheet…" />
+            <span>Search</span>
+            <input id="browser-search" placeholder="Filter datasheets by name..." />
           </label>
           <label class="field">
-            <span>Defender model line</span>
-            <select id="defender-model-select">
-              <option value="">Select a target first</option>
+            <span>Faction</span>
+            <select id="browser-faction">
+              <option value="">All factions</option>
+              {% for faction in factions %}
+              <option value="{{ faction.id }}">{{ faction.name }}</option>
+              {% endfor %}
             </select>
           </label>
-          <label class="field">
-            <span>Target models in unit</span>
-            <input id="target-model-count" type="number" min="1" max="60" value="1" />
-          </label>
         </div>
-      </div>
-
-      <div id="custom-target-panel" class="target-panel hidden">
-        <div class="form-grid">
-          <label class="field">
-            <span>Target name</span>
-            <input id="custom-target-name" value="Custom Target" />
-          </label>
-          <label class="field">
-            <span>Toughness</span>
-            <input id="custom-target-toughness" type="number" min="1" max="40" value="4" />
-          </label>
-          <label class="field">
-            <span>Save</span>
-            <input id="custom-target-save" type="number" min="2" max="7" value="3" />
-          </label>
-          <label class="field">
-            <span>Invulnerable save</span>
-            <input id="custom-target-invuln" type="number" min="2" max="7" placeholder="Optional" />
-          </label>
-          <label class="field">
-            <span>Wounds per model</span>
-            <input id="custom-target-wounds" type="number" min="1" max="99" value="2" />
-          </label>
-          <label class="field field-wide">
-            <span>Keywords</span>
-            <input id="custom-target-keywords" placeholder="e.g. Infantry, Character, Vehicle" />
-          </label>
+        <div class="browser-grid">
+          <div id="browser-list" class="browser-list">
+            <p class="empty-state">Loading datasheets...</p>
+          </div>
+          <div id="datasheet-detail" class="browser-detail">
+            <p class="empty-state">Choose a datasheet to inspect its weapons, costs, and rules.</p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="form-actions">
-        <button class="button button-primary" type="submit">Run simulation</button>
-      </div>
-    </form>
+      <section class="card card-status">
+        <div class="card-header">
+          <div>
+            <p class="section-label">Data control</p>
+            <h2>Wahapedia sync</h2>
+          </div>
+          <button id="sync-button" class="button button-primary">Refresh data</button>
+        </div>
+        <div id="sync-status" class="status-message">Ready.</div>
+        <div class="stats-grid">
+          <article class="stat">
+            <span class="stat-label">Factions</span>
+            <strong id="stat-factions">{{ stats.faction_count }}</strong>
+          </article>
+          <article class="stat">
+            <span class="stat-label">Datasheets</span>
+            <strong id="stat-datasheets">{{ stats.datasheet_count }}</strong>
+          </article>
+          <article class="stat">
+            <span class="stat-label">Weapons</span>
+            <strong id="stat-weapons">{{ stats.weapon_count }}</strong>
+          </article>
+          <article class="stat">
+            <span class="stat-label">Fixture files</span>
+            <strong id="stat-files">{{ stats.fixture_file_count }}</strong>
+          </article>
+        </div>
+        <dl class="meta-list">
+          <div>
+            <dt>Fixtures</dt>
+            <dd id="meta-fixtures">{{ stats.fixtures_dir }}</dd>
+          </div>
+          <div>
+            <dt>Wahapedia last update</dt>
+            <dd id="meta-last-update">{{ stats.last_update or "Not imported yet" }}</dd>
+          </div>
+          <div>
+            <dt>Last download</dt>
+            <dd id="meta-last-download">{{ stats.last_downloaded_at or "Not downloaded yet" }}</dd>
+          </div>
+        </dl>
+      </section>
+    </div>
   </section>
 
-  <section class="card card-results">
-    <div class="card-header">
-      <div>
-        <p class="section-label">Results</p>
-        <h2>Combat output</h2>
-      </div>
-    </div>
-    <div id="results-panel" class="results-placeholder">
-      Select an attacker, pick a weapon, and choose a target to see both expected values and Monte Carlo results.
-    </div>
-  </section>
+  <section
+    id="workspace-panel-roster"
+    class="workspace-panel"
+    role="tabpanel"
+    aria-labelledby="workspace-tab-roster"
+    data-workspace-panel="roster"
+    hidden
+  >
+    <div class="workspace workspace-roster">
+      <section class="card card-army">
+        <div class="card-header">
+          <div>
+            <p class="section-label">Roster foundry</p>
+            <h2>Build and save army lists</h2>
+          </div>
+          <div class="card-header-actions">
+            <button id="army-list-new" class="button button-secondary" type="button">New list</button>
+            <button id="army-list-create" class="button button-primary" type="button">Create list</button>
+            <button id="army-list-save" class="button button-secondary" type="button">Save changes</button>
+            <button id="army-list-delete" class="button button-danger" type="button">Delete list</button>
+          </div>
+        </div>
+        <div id="army-list-status" class="status-message">Create a roster or load a saved list to start building.</div>
+        <div class="army-layout">
+          <div class="army-column">
+            <section class="subpanel">
+              <div class="subpanel-header">
+                <div>
+                  <p class="section-label">Roster shell</p>
+                  <h3>Saved list details</h3>
+                </div>
+              </div>
+              <div class="form-grid army-meta-grid">
+                <label class="field field-wide">
+                  <span>Saved list</span>
+                  <select id="army-list-select">
+                    <option value="">Create a new list</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>List name</span>
+                  <input id="army-list-name" placeholder="e.g. Silver Tide Spearhead" />
+                </label>
+                <label class="field">
+                  <span>Faction</span>
+                  <select id="army-list-faction">
+                    <option value="">Choose faction</option>
+                    {% for faction in factions %}
+                    <option value="{{ faction.id }}">{{ faction.name }}</option>
+                    {% endfor %}
+                  </select>
+                </label>
+                <label class="field field-wide">
+                  <span>Notes</span>
+                  <textarea id="army-list-notes" rows="3" placeholder="Detachment, event notes, matchup reminders, or list intent."></textarea>
+                </label>
+              </div>
+              <div id="army-list-summary" class="subpanel-body">
+                <p class="empty-state">Select a saved list or create a new roster to see totals and warnings.</p>
+              </div>
+            </section>
 
-  <section class="card card-browser">
-    <div class="card-header">
-      <div>
-        <p class="section-label">Datasheet explorer</p>
-        <h2>Search the imported catalogue</h2>
-      </div>
-    </div>
-    <div class="browser-controls">
-      <label class="field">
-        <span>Search</span>
-        <input id="browser-search" placeholder="Filter datasheets by name…" />
-      </label>
-      <label class="field">
-        <span>Faction</span>
-        <select id="browser-faction">
-          <option value="">All factions</option>
-          {% for faction in factions %}
-          <option value="{{ faction.id }}">{{ faction.name }}</option>
-          {% endfor %}
-        </select>
-      </label>
-    </div>
-    <div class="browser-grid">
-      <div id="browser-list" class="browser-list">
-        <p class="empty-state">Loading datasheets…</p>
-      </div>
-      <div id="datasheet-detail" class="browser-detail">
-        <p class="empty-state">Choose a datasheet to inspect its weapons, costs, and rules.</p>
-      </div>
+            <section class="subpanel">
+              <div class="subpanel-header">
+                <div>
+                  <p class="section-label">Roster units</p>
+                  <h3>Saved entries</h3>
+                </div>
+              </div>
+              <div id="army-list-entries" class="subpanel-body">
+                <p class="empty-state">No units added yet. Create a list, then add units from the editor.</p>
+              </div>
+            </section>
+          </div>
+
+          <div class="army-column">
+            <section class="subpanel">
+              <div class="subpanel-header">
+                <div>
+                  <p class="section-label">Unit editor</p>
+                  <h3>Add or update a unit</h3>
+                </div>
+                <button id="army-entry-clear" class="button button-secondary" type="button">Clear unit</button>
+              </div>
+              <form id="army-entry-form" class="sim-form">
+                <div class="form-grid army-entry-grid">
+                  <label class="field field-wide">
+                    <span>Datasheet</span>
+                    <input id="army-entry-datasheet" list="datasheet-options" placeholder="Select a datasheet..." />
+                  </label>
+                  <label class="field">
+                    <span>Model line</span>
+                    <select id="army-entry-model">
+                      <option value="">Default unit profile</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Unit size</span>
+                    <input id="army-entry-unit-size" type="number" min="1" max="60" value="1" />
+                  </label>
+                  <label class="field">
+                    <span>Quantity</span>
+                    <input id="army-entry-quantity" type="number" min="1" max="12" value="1" />
+                  </label>
+                  <label class="field field-wide">
+                    <span>Points profile</span>
+                    <select id="army-entry-cost">
+                      <option value="">Custom or unpriced unit</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Points each</span>
+                    <input id="army-entry-points" type="number" min="0" max="5000" placeholder="Optional" />
+                  </label>
+                  <label class="field">
+                    <span>Sort order</span>
+                    <input id="army-entry-sort-order" type="number" min="0" max="10000" step="10" placeholder="Auto" />
+                  </label>
+                  <label class="field field-wide">
+                    <span>Display name</span>
+                    <input id="army-entry-nickname" placeholder="Optional custom unit label" />
+                  </label>
+                  <label class="field field-wide">
+                    <span>Unit notes</span>
+                    <textarea id="army-entry-notes" rows="3" placeholder="Wargear choices, attached leaders, or plan notes."></textarea>
+                  </label>
+                </div>
+                <div class="form-actions form-actions-spread">
+                  <p id="army-entry-context" class="form-helper">Pick a datasheet and a points profile to build a roster entry.</p>
+                  <div class="button-row">
+                    <button id="army-entry-submit" class="button button-primary" type="submit">Add unit to list</button>
+                  </div>
+                </div>
+              </form>
+            </section>
+
+            <section class="subpanel">
+              <div class="subpanel-header">
+                <div>
+                  <p class="section-label">Simulation handoff</p>
+                  <h3>Load saved units into the forge</h3>
+                </div>
+              </div>
+              <div class="form-grid army-sim-grid">
+                <label class="field">
+                  <span>Attacker list</span>
+                  <select id="sim-attacker-list">
+                    <option value="">Choose a saved list</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Attacker unit</span>
+                  <select id="sim-attacker-entry">
+                    <option value="">Choose a list first</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Defender list</span>
+                  <select id="sim-defender-list">
+                    <option value="">Choose a saved list</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Defender unit</span>
+                  <select id="sim-defender-entry">
+                    <option value="">Choose a list first</option>
+                  </select>
+                </label>
+              </div>
+              <div class="button-row">
+                <button id="sim-load-attacker" class="button button-secondary" type="button">Load attacker unit</button>
+                <button id="sim-load-defender" class="button button-secondary" type="button">Load defender unit</button>
+              </div>
+              <p class="status-message compact-status">
+                Saved roster entries can prefill datasheets, model lines, and unit sizes for quicker simulations.
+              </p>
+            </section>
+          </div>
+        </div>
+      </section>
     </div>
   </section>
 </main>

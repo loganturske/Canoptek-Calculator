@@ -17,12 +17,14 @@ from ..schemas.api import (
     SimulationRequest,
     SimulationResponse,
 )
+from .unit_builds import UnitBuildService
 
 
 class SimulationService:
     def __init__(self, session: Session) -> None:
         self.session = session
         self.simulator = CombatSimulator()
+        self.unit_builds = UnitBuildService(session)
 
     def simulate(self, request: SimulationRequest) -> SimulationResponse:
         weapon_row = self.session.get(DatasheetWargear, request.attacker_weapon_id)
@@ -44,6 +46,12 @@ class SimulationService:
         if built_weapon.weapon is None:
             raise ValueError(built_weapon.error or "The selected weapon cannot be simulated.")
 
+        attacker_build = self.unit_builds.resolve_attacker_build(
+            weapon_row.datasheet_id,
+            attacker_leader_ids=request.attacker_leader_ids,
+            attacker_enabled_effect_ids=request.attacker_enabled_effect_ids,
+            weapon_kind=built_weapon.weapon.kind,
+        )
         target = self._build_target(request)
         context = AttackContext(
             attacker_models=request.attacker_models,
@@ -52,6 +60,13 @@ class SimulationService:
             wound_reroll=request.wound_reroll,
             hit_modifier=request.hit_modifier,
             wound_modifier=request.wound_modifier,
+            bonus_hit_modifier=attacker_build.modifiers.bonus_hit_modifier,
+            bonus_wound_modifier=attacker_build.modifiers.bonus_wound_modifier,
+            hit_crit_threshold=attacker_build.modifiers.hit_crit_threshold,
+            granted_wound_reroll=attacker_build.modifiers.granted_wound_reroll,
+            granted_lethal_hits=attacker_build.modifiers.granted_lethal_hits,
+            granted_sustained_hits=attacker_build.modifiers.granted_sustained_hits,
+            applied_effects=attacker_build.modifiers.applied_effects,
             half_range=request.half_range,
             stationary=request.stationary,
             charged=request.charged,
@@ -61,6 +76,8 @@ class SimulationService:
         return SimulationResponse(
             weapon_name=built_weapon.weapon.name,
             target_name=target.name,
+            attacker_leaders=[leader.name for leader in attacker_build.preview.selected_leaders],
+            applied_effects=list(result.applied_effects),
             supported_rules=list(result.supported_rules),
             ignored_rules=list(result.ignored_rules),
             effective_hit_modifier=result.effective_hit_modifier,
